@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acabou o Expediente: Rumo CASA!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Press+Start+2P&family=Inter:wght@400;600;800&display=swap');
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #04060a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier Prime', monospace;
+            color: #f1f5f9;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 960px;
+            aspect-ratio: 16 / 9;
+            max-height: 540px;
+            background-color: #0b131e;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.95), 0 0 0 2px #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        canvas#gameCanvas, canvas#officeBgCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .screen-overlay {
+            position: absolute;
+             inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+            padding: 22px 32px;
+            background: radial-gradient(circle at center, rgba(11, 18, 30, 0.86) 0%, rgba(4, 7, 12, 0.96) 100%);
+            transition: opacity 0.25s ease;
+        }
+
+        .screen-overlay.office-menu-bg {
+            background: linear-gradient(180deg, rgba(6, 10, 18, 0.78) 0%, rgba(6, 10, 18, 0.25) 45%, rgba(6, 10, 18, 0.88) 100%);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Estilo de cartões inspirado no cadeflavio.run */
+        .char-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            width: 100%;
+            max-width: 820px;
+        }
+
+        .char-card {
+            background: rgba(20, 24, 33, 0.9);
+            border: 2px solid #2e3646;
+            border-radius: 8px;
+            padding: 12px 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .char-card:hover {
+            border-color: #94a3b8;
+            transform: translateY(-3px);
+            background: rgba(28, 34, 46, 0.95);
+        }
+
+        .char-card.selected {
+            border-color: #f59e0b;
+            background: radial-gradient(circle at center, rgba(245, 158, 11, 0.16) 0%, rgba(22, 26, 35, 0.95) 75%);
+            box-shadow: 0 0 22px rgba(245, 158, 11, 0.35);
+        }
+
+        .char-card.selected .char-card-name {
+            color: #fbbf24;
+        }
+
+        .char-card-name {
+            font-family: 'Courier Prime', monospace;
+            font-weight: 700;
+            font-size: 16px;
+            color: #e2e8f0;
+            margin-top: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .char-card-phrase {
+            font-family: 'Courier Prime', monospace;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 3px;
+            line-height: 1.25;
+        }
+
+        /* Cartões de dificuldade */
+        .diff-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            width: 100%;
+            max-width: 820px;
+        }
+
+        .diff-card {
+            background: rgba(20, 24, 33, 0.9);
+            border: 2px solid #2e3646;
+            border-radius: 8px;
+            padding: 18px 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .diff-card:hover {
+            border-color: #94a3b8;
+            transform: translateY(-3px);
+        }
+
+        .diff-card.selected {
+            border-color: #f59e0b;
+            background: radial-gradient(circle at center, rgba(245, 158, 11, 0.16) 0%, rgba(22, 26, 35, 0.95) 80%);
+            box-shadow: 0 0 22px rgba(245, 158, 11, 0.35);
+        }
+
+        /* Botões principais */
+        .btn-primary {
+            background: rgba(45, 18, 22, 0.9);
+            color: #f8fafc;
+            border: 2px solid #b91c1c;
+            padding: 12px 34px;
+            font-family: 'Courier Prime', monospace;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 18px rgba(185, 28, 28, 0.35);
+        }
+
+        .btn-primary:hover {
+            background: #991b1b;
+            border-color: #f87171;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+            transform: scale(1.03);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.8);
+            color: #cbd5e1;
+            border: 1px solid #475569;
+            padding: 10px 22px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 14px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #334155;
+            color: #fff;
+        }
+
+        /* Alerta Neon do Energético e Reta Final */
+        #special-banner {
+            position: absolute;
+            top: 26%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 15;
+            pointer-events: none;
+            text-align: center;
+            font-family: 'Press Start 2P', monospace;
+            animation: bannerPop 0.45s infinite alternate ease-in-out;
+        }
+
+        .banner-energy {
+            color: #00f5d4;
+            font-size: 22px;
+            text-shadow: 0 0 12px #00f5d4, 0 0 28px #00bbf9, 3px 3px 0px #000;
+            background: rgba(4, 12, 24, 0.82);
+            border: 2px solid #00f5d4;
+            padding: 14px 26px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 245, 212, 0.45);
+        }
+
+        .banner-office {
+            color: #fde047;
+            font-size: 19px;
+            text-shadow: 0 0 12px #f59e0b, 0 0 28px #eab308, 3px 3px 0px #000;
+            background: rgba(20, 14, 4, 0.88);
+            border: 2px solid #fde047;
+            padding: 14px 26px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(250, 204, 21, 0.5);
+        }
+
+        @keyframes bannerPop {
+            0% { transform: translate(-50%, -50%) scale(0.96) rotate(-1deg); }
+            100% { transform: translate(-50%, -50%) scale(1.06) rotate(1deg); }
+        }
+
+        /* Controles Mobile Touch */
+        #mobile-dpad {
+            position: absolute;
+            bottom: 14px;
+            left: 18px;
+            z-index: 14;
+            display: none;
+            grid-template-columns: repeat(3, 44px);
+            grid-template-rows: repeat(3, 44px);
+            gap: 4px;
+            opacity: 0.75;
+        }
+
+        .dpad-btn {
+            background: rgba(15, 23, 42, 0.85);
+            border: 2px solid #475569;
+            border-radius: 8px;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            user-select: none;
+        }
+
+        .dpad-btn:active {
+            background: #f59e0b;
+            color: #000;
+        }
+
+        @media (max-width: 768px) {
+            .char-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .diff-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .screen-overlay {
+                padding: 12px 16px;
+                overflow-y: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <!-- Canvas Principal do Jogo -->
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+    <!-- Banner Animado (50 Moedas Energético / 100 Moedas Reta Final) -->
+    <div id="special-banner" class="hidden"></div>
+
+    <!-- D-Pad Virtual para Celulares/Tablets -->
+    <div id="mobile-dpad">
+        <div></div>
+        <div class="dpad-btn" data-dir="up">▲</div>
+        <div></div>
+        <div class="dpad-btn" data-dir="left">◀</div>
+        <div></div>
+        <div class="dpad-btn" data-dir="right">▶</div>
+        <div></div>
+        <div class="dpad-btn" data-dir="down">▼</div>
+        <div></div>
+    </div>
+
+    <!-- =================================================================
+         TELA 1: MENU PRINCIPAL (CENA DO ESCRITÓRIO ANIMADA)
+    ================================================================== -->
+    <div id="screen-main-menu" class="screen-overlay office-menu-bg">
+        <div class="text-center mt-1">
+            <p class="text-xs tracking-[0.35em] text-amber-400 uppercase font-bold mb-1">EXPEDIENTE NOTURNO</p>
+            <h1 class="text-3xl md:text-4xl font-bold tracking-wider text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.9)]" style="font-family: 'Press Start 2P', monospace;">
+                NIGHT RUN
+            </h1>
+            <p class="text-sm text-slate-300 mt-2 bg-slate-900/80 px-4 py-1 rounded-full border border-slate-700 inline-block">
+                Erika, Max, Samuel e Issao no escritório • Colete 100 moedas para chegar em casa!
+            </p>
+        </div>
+
+        <!-- Rodapé do Menu Inicial -->
+        <div class="w-full flex flex-col items-center gap-2 mb-1">
+            <div class="text-xs text-amber-300 bg-black/75 px-4 py-1.5 rounded border border-amber-500/40">
+                🏆 RECORDE ATUAL: <span id="menu-highscore" class="font-bold text-white">0</span> MOEDAS
+            </div>
+            <button id="btn-goto-char" class="btn-primary">
+                INICIAR JOGO
+            </button>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         TELA 2: ESCOLHA DE PERSONAGEM (ESTILO CADEFLAVIO.RUN)
+    ================================================================== -->
+    <div id="screen-char-select" class="screen-overlay hidden">
+        <div class="text-center">
+            <p class="text-xs tracking-[0.3em] text-red-400 uppercase mb-1">ANTES DE ATRAVESSAR A AVENIDA</p>
+            <h2 class="text-2xl md:text-3xl text-slate-100 font-normal tracking-wider">Escolha seu personagem</h2>
+        </div>
+
+        <div class="char-grid" id="char-cards-container">
+            <!-- Card Erika -->
+            <div class="char-card selected" data-char="Erika" onclick="selectCharacterCard('Erika')">
+                <canvas id="preview-Erika" width="90" height="105"></canvas>
+                <div class="char-card-name">Erika</div>
+                <div class="char-card-phrase">"Rainha de Compras"</div>
+            </div>
+
+            <!-- Card Max -->
+            <div class="char-card" data-char="Max" onclick="selectCharacterCard('Max')">
+                <canvas id="preview-Max" width="90" height="105"></canvas>
+                <div class="char-card-name">Max</div>
+                <div class="char-card-phrase">"Filho do Tomio"</div>
+            </div>
+
+            <!-- Card Samuel -->
+            <div class="char-card" data-char="Samuel" onclick="selectCharacterCard('Samuel')">
+                <canvas id="preview-Samuel" width="90" height="105"></canvas>
+                <div class="char-card-name">Samuel</div>
+                <div class="char-card-phrase">"Jogador Caro"</div>
+            </div>
+
+            <!-- Card Issao -->
+            <div class="char-card" data-char="Issao" onclick="selectCharacterCard('Issao')">
+                <canvas id="preview-Issao" width="90" height="105"></canvas>
+                <div class="char-card-name">Issao</div>
+                <div class="char-card-phrase">"Veterano Inabalável"</div>
+            </div>
+        </div>
+
+        <!-- Rodapé com descrição detalhada e botão -->
+        <div class="w-full max-w-[820px] flex flex-col md:flex-row justify-between items-center border-t border-slate-800 pt-3 gap-3">
+            <div class="text-left">
+                <div id="selected-char-title" class="text-amber-400 font-bold text-lg">Erika — "Rainha de Compras"</div>
+                <div id="selected-char-desc" class="text-slate-400 text-xs max-w-md">
+                    Sempre de bom humor e cabelos soltos. Desvia de carros como quem filtra dados no Excel.
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="btn-secondary" onclick="showScreen('screen-main-menu')">VOLTAR</button>
+                <button class="btn-primary" onclick="showScreen('screen-diff-select')">DIFICULDADE ➔</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         TELA 3: ESCOLHA DE DIFICULDADE
+    ================================================================== -->
+    <div id="screen-diff-select" class="screen-overlay hidden">
+        <div class="text-center">
+            <p class="text-xs tracking-[0.3em] text-amber-400 uppercase mb-1">CONFIGURAÇÃO DO TRÂNSITO</p>
+            <h2 class="text-2xl md:text-3xl text-slate-100 font-normal tracking-wider">Escolha a Dificuldade</h2>
+        </div>
+
+        <div class="diff-grid">
+            <!-- Fácil -->
+            <div class="diff-card" data-diff="easy" onclick="selectDifficultyCard('easy')">
+                <div class="text-3xl mb-2">☕</div>
+                <div class="text-lg font-bold text-emerald-400">FÁCIL (Estagiário)</div>
+                <div class="text-xs text-slate-300 mt-2 leading-relaxed">
+                    Trânsito mais calmo, veículos em velocidade reduzida e <strong>4 Corações</strong> de vida inicial.
+                </div>
+                <div class="mt-3 text-xs text-amber-300 font-bold">❤️❤️❤️❤️</div>
+            </div>
+
+            <!-- Médio -->
+            <div class="diff-card selected" data-diff="medium" onclick="selectDifficultyCard('medium')">
+                <div class="text-3xl mb-2">💼</div>
+                <div class="text-lg font-bold text-amber-400">MÉDIO (Pleno)</div>
+                <div class="text-xs text-slate-300 mt-2 leading-relaxed">
+                    Horário de pico! Carros, motos e ônibus em velocidade normal e <strong>3 Corações</strong> de vida.
+                </div>
+                <div class="mt-3 text-xs text-amber-300 font-bold">❤️❤️❤️</div>
+            </div>
+
+            <!-- Difícil -->
+            <div class="diff-card" data-diff="hard" onclick="selectDifficultyCard('hard')">
+                <div class="text-3xl mb-2">🔥</div>
+                <div class="text-lg font-bold text-rose-500">DIFÍCIL (Sênior)</div>
+                <div class="text-xs text-slate-300 mt-2 leading-relaxed">
+                    Caos total na rodovia! Alta velocidade, trânsito pesado e apenas <strong>2 Corações</strong> iniciais.
+                </div>
+                <div class="mt-3 text-xs text-amber-300 font-bold">❤️❤️</div>
+            </div>
+        </div>
+
+        <div class="w-full max-w-[820px] flex justify-between items-center border-t border-slate-800 pt-3">
+            <button class="btn-secondary" onclick="showScreen('screen-char-select')">⬅ PERSONAGEM</button>
+            <div class="text-xs text-slate-400 hidden sm:block">
+                Use <strong>WASD</strong> ou <strong>Setas</strong> para andar livremente em todas as direções!
+            </div>
+            <button class="btn-primary" onclick="startGameplay()">ATRAVESSAR</button>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         TELA 4: GAME OVER
+    ================================================================== -->
+    <div id="screen-gameover" class="screen-overlay hidden" style="justify-content: center; gap: 18px;">
+        <p class="text-xs tracking-[0.35em] text-red-500 uppercase">ACIDENTE NO PERCURSO</p>
+        <h2 class="text-3xl text-red-500 font-bold" style="font-family: 'Press Start 2P', monospace;">FIM DE JOGO</h2>
+        <p class="text-slate-300 text-sm max-w-md text-center">
+            O trânsito noturno levou a melhor antes de você chegar em casa!
+        </p>
+
+        <div class="bg-slate-900/90 border border-slate-700 rounded-lg px-8 py-4 text-center flex gap-8">
+            <div>
+                <div class="text-xs text-slate-400">MOEDAS COLETADAS</div>
+                <div id="gameover-coins" class="text-2xl font-bold text-amber-400 mt-1">0 / 100</div>
+            </div>
+            <div class="border-l border-slate-700 pl-8">
+                <div class="text-xs text-slate-400">SEU RECORDE</div>
+                <div id="gameover-best" class="text-2xl font-bold text-emerald-400 mt-1">0</div>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-2">
+            <button class="btn-secondary" onclick="showScreen('screen-main-menu')">MENU DO ESCRITÓRIO</button>
+            <button class="btn-primary" onclick="startGameplay()">TENTAR NOVAMENTE</button>
+        </div>
+    </div>
+
+    <!-- =================================================================
+         TELA 5: VITÓRIA (CHEGOU NO ESCRITÓRIO COM 100 MOEDAS)
+    ================================================================== -->
+    <div id="screen-victory" class="screen-overlay hidden" style="justify-content: center; gap: 18px;">
+        <p class="text-xs tracking-[0.35em] text-emerald-400 uppercase">CHEGOU EM CASA COM SUCESSO!</p>
+        <h2 class="text-2xl md:text-3xl text-amber-400 font-bold text-center" style="font-family: 'Press Start 2P', monospace;">
+            CHEGOU EM CASA!
+        </h2>
+        <p id="victory-msg" class="text-slate-200 text-sm max-w-lg text-center">
+            Parabéns! Você coletou as 100 moedas, desviou de todo o trânsito e chegou em casa!
+        </p>
+
+        <div class="bg-slate-900/90 border border-amber-500/50 rounded-lg px-8 py-4 text-center flex gap-8">
+            <div>
+                <div class="text-xs text-slate-400">MOEDAS FINAIS</div>
+                <div id="victory-coins" class="text-2xl font-bold text-amber-400 mt-1">100</div>
+            </div>
+            <div class="border-l border-slate-700 pl-8">
+                <div class="text-xs text-slate-400">RECORDE GERAL</div>
+                <div id="victory-best" class="text-2xl font-bold text-emerald-400 mt-1">100</div>
+            </div>
+        </div>
+
+        <div class="flex gap-4 mt-2">
+            <button class="btn-secondary" onclick="showScreen('screen-char-select')">TROCAR PERSONAGEM</button>
+            <button class="btn-primary" onclick="startGameplay()">JOGAR NOVAMENTE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // =========================================================================
+    // CONFIGURAÇÕES GERAIS E ESTADO DO JOGO
+    // =========================================================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const W = 960;
+    const H = 540;
+
+    // Geometria da Ponte / Avenida (inspirada exatamente em cadeflavio.run)
+    const ROAD_TOP = 165;
+    const ROAD_BOTTOM = 415;
+    const ROAD_HEIGHT = ROAD_BOTTOM - ROAD_TOP; // 250px
+    const LANE_COUNT = 3;
+    const LANE_H = ROAD_HEIGHT / LANE_COUNT;
+    const LANE_CENTERS = [
+        ROAD_TOP + LANE_H * 0.5,
+        ROAD_TOP + LANE_H * 1.5,
+        ROAD_TOP + LANE_H * 2.5
+    ];
+
+    // Metadados dos 4 Personagens
+    const CHARACTERS = {
+        Erika: {
+            name: 'Erika',
+            tag: 'ERIKA',
+            phrase: '"Rainha de Compras"',
+            desc: 'Sempre de bom humor e cabelos soltos. Desvia de carros como quem filtra dados no Excel.',
+            skin: '#F7D3B0',       // Pele clara
+            shirt: '#F1C40F',      // Camisa amarela
+            shirtAccent: '#D4AC0D',
+            pants: '#2C3E50',
+            hairColor: '#2C1810',  // Castanho escuro solto sem franja
+            hairStyle: 'long_parted',
+            glasses: false
+        },
+        Max: {
+            name: 'Max',
+            tag: 'MAX',
+            phrase: '"Filho do Tomio"',
+            desc: 'Camisa rosa marcante, careca reluzente e óculos no rosto. Nada impede o filho do Tomio de chegar no horário!',
+            skin: '#9C643C',       // Pardo mais escurinho
+            shirt: '#E91E63',      // Roupa rosa
+            shirtAccent: '#C2185B',
+            pants: '#1E293B',
+            hairColor: 'none',     // Careca
+            hairStyle: 'bald',
+            glasses: true
+        },
+        Samuel: {
+            name: 'Samuel',
+            tag: 'SAMUEL',
+            phrase: '"Jogador Caro"',
+            desc: 'Cabelo sempre na régua e roupa estilosa. Faz query otimizada enquanto atravessa a avenida.',
+            skin: '#D8A97C',       // Branco/pardo
+            shirt: '#2563EB',      // Jaqueta azul estilosa com camiseta interna
+            shirtAccent: '#1D4ED8',
+            pants: '#0F172A',
+            hairColor: '#1A1412',  // Cacheado bem curtinho
+            hairStyle: 'short_curly',
+            glasses: false,
+            stylishJacket: true
+        },
+        Issao: {
+            name: 'Issao',
+            tag: 'ISSAO',
+            phrase: '"Veterano Inabalável"',
+            desc: 'Cabelo grisalho liso alinhado e óculos clássicos. Já viu tanto bug na vida que nem ônibus assusta.',
+            skin: '#F5D6B8',       // Pele clara/asiática
+            shirt: '#10B981',      // Camisa verde esmeralda
+            shirtAccent: '#059669',
+            pants: '#334155',
+            hairColor: '#CBD5E1',  // Grisalho liso
+            hairStyle: 'straight_grey',
+            glasses: true
+        }
+    };
+
+    // Configurações de Dificuldade
+    const DIFFICULTIES = {
+        easy: {
+            label: 'Estagiário',
+            lives: 4,
+            trafficSpeedMult: 0.78,
+            spawnInterval: 68,
+            scrollSpeed: 3.4
+        },
+        medium: {
+            label: 'Pleno',
+            lives: 3,
+            trafficSpeedMult: 1.0,
+            spawnInterval: 48,
+            scrollSpeed: 4.5
+        },
+        hard: {
+            label: 'Sênior',
+            lives: 2,
+            trafficSpeedMult: 1.28,
+            spawnInterval: 34,
+            scrollSpeed: 5.8
+        }
+    };
+
+    // Estado Atual
+    let currentScreen = 'screen-main-menu';
+    let selectedCharKey = 'Erika';
+    let selectedDiffKey = 'medium';
+    let highScore = parseInt(localStorage.getItem('nightRun_office_highScore') || '0', 10);
+    document.getElementById('menu-highscore').innerText = highScore;
+
+    let frameCount = 0;
+    let worldScroll = 0;
+    let coinsCollected = 0;
+    let nextEnergyMilestone = 50;
+    let officeSpawned = false;
+    let officeBuilding = null;
+
+    // Jogador com física LERP 2D livre (Cima, Baixo, Frente, Trás)
+    const player = {
+        x: 170,
+        y: LANE_CENTERS[1],
+        vx: 0,
+        vy: 0,
+        maxSpeedX: 5.4,
+        maxSpeedY: 4.8,
+        lerpFactor: 0.14, // Suavidade estilo jogo 3D
+        radius: 17,
+        lives: 3,
+        maxLives: 4,
+        invulnTimer: 0,
+        walkCycle: 0,
+        tilt: 0
+    };
+
+    // Listas de entidades do jogo
+    let obstacles = [];
+    let collectibles = [];
+    let floatingTexts = [];
+    let particles = [];
+
+    // Input (Teclado + Mobile)
+    const inputKeys = { up: false, down: false, left: false, right: false };
+
+    // =========================================================================
+    // NAVEGAÇÃO ENTRE AS 3 TELAS DE MENU
+    // =========================================================================
+    function showScreen(screenId) {
+        currentScreen = screenId;
+        const allScreens = [
+            'screen-main-menu',
+            'screen-char-select',
+            'screen-diff-select',
+            'screen-gameover',
+            'screen-victory'
+        ];
+        allScreens.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                if (id === screenId) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            }
+        });
+        document.getElementById('special-banner').classList.add('hidden');
+        document.getElementById('menu-highscore').innerText = highScore;
+    }
+
+    document.getElementById('btn-goto-char').addEventListener('click', () => {
+        showScreen('screen-char-select');
+        renderCharacterPreviews();
+    });
+
+    function selectCharacterCard(charKey) {
+        selectedCharKey = charKey;
+        document.querySelectorAll('.char-card').forEach(card => {
+            card.classList.toggle('selected', card.dataset.char === charKey);
+        });
+        const info = CHARACTERS[charKey];
+        document.getElementById('selected-char-title').innerText = `${info.name} — ${info.phrase}`;
+        document.getElementById('selected-char-desc').innerText = info.desc;
+    }
+
+    function selectDifficultyCard(diffKey) {
+        selectedDiffKey = diffKey;
+        document.querySelectorAll('.diff-card').forEach(card => {
+            card.classList.toggle('selected', card.dataset.diff === diffKey);
+        });
+    }
+
+    // =========================================================================
+    // FUNÇÃO CENTRAL DE DESENHO DE PERSONAGEM (CORPO INTEIRO ESTILO CADEFLAVIO)
+    // =========================================================================
+    function drawFullCharacter(ctx, x, y, charKey, options = {}) {
+        const c = CHARACTERS[charKey];
+        const scale = options.scale || 1;
+        const walkCycle = options.walkCycle || 0;
+        const isMoving = options.isMoving || false;
+        const showTag = options.showTag !== undefined ? options.showTag : true;
+        const tilt = options.tilt || 0;
+        const seated = options.seated || false;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+
+        // 1. Sombra projetada no chão
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.beginPath();
+        ctx.ellipse(0, 21, 14, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Inclinação suave de Lerp ao correr
+        ctx.rotate(tilt);
+
+        const legSwing = isMoving ? Math.sin(walkCycle) * 5.5 : 0;
+        const armSwing = isMoving ? Math.sin(walkCycle) * 4.5 : 0;
+        const bodyBob = isMoving ? Math.abs(Math.cos(walkCycle)) * 1.8 : 0;
+
+        ctx.translate(0, -bodyBob);
+
+        // 2. Pernas e Sapatos (Visão 3/4 Frontal)
+        if (!seated) {
+            // Perna Esquerda
+            ctx.fillStyle = c.pants;
+            ctx.strokeStyle = '#090d16';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.roundRect(-8, 6 + legSwing * 0.6, 7, 12, 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Sapato Esquerdo
+            ctx.fillStyle = '#111827';
+            ctx.beginPath();
+            ctx.roundRect(-9, 15 + legSwing * 0.6, 8, 5, 2);
+            ctx.fill();
+
+            // Perna Direita
+            ctx.fillStyle = c.pants;
+            ctx.beginPath();
+            ctx.roundRect(1, 6 - legSwing * 0.6, 7, 12, 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Sapato Direito
+            ctx.fillStyle = '#111827';
+            ctx.beginPath();
+            ctx.roundRect(1, 15 - legSwing * 0.6, 8, 5, 2);
+            ctx.fill();
+        }
+
+        // 3. Cabelo Longo de Fundo (para Erika: solto atrás dos ombros)
+        if (c.hairStyle === 'long_parted') {
+            ctx.fillStyle = c.hairColor;
+            ctx.beginPath();
+            ctx.roundRect(-14, -22, 28, 24, 8);
+            ctx.fill();
+        }
+
+        // 4. Braços Laterais
+        ctx.strokeStyle = '#090d16';
+        ctx.lineWidth = 1.5;
+
+        // Manga/Braço Esquerdo
+        ctx.fillStyle = c.shirt;
+        ctx.beginPath();
+        ctx.roundRect(-14, -8 - armSwing * 0.5, 6, 11, 3);
+        ctx.fill();
+        ctx.stroke();
+        // Mão Esquerda
+        ctx.fillStyle = c.skin;
+        ctx.beginPath();
+        ctx.arc(-11, 5 - armSwing * 0.5, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Manga/Braço Direito
+        ctx.fillStyle = c.shirt;
+        ctx.beginPath();
+        ctx.roundRect(8, -8 + armSwing * 0.5, 6, 11, 3);
+        ctx.fill();
+        ctx.stroke();
+        // Mão Direita
+        ctx.fillStyle = c.skin;
+        ctx.beginPath();
+        ctx.arc(11, 5 + armSwing * 0.5, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // 5. Tronco (Camisa / Jaqueta)
+        ctx.fillStyle = c.shirt;
+        ctx.beginPath();
+        ctx.roundRect(-10, -10, 20, 18, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        // Detalhe estiloso da roupa
+        if (c.stylishJacket) {
+            // Camiseta branca por baixo da jaqueta aberta do Samuel
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(-3.5, -9, 7, 16);
+            // Gola da jaqueta
+            ctx.fillStyle = c.shirtAccent;
+            ctx.fillRect(-6, -10, 3, 7);
+            ctx.fillRect(3, -10, 3, 7);
+        } else {
+            // Gola simples
+            ctx.fillStyle = c.shirtAccent;
+            ctx.beginPath();
+            ctx.arc(0, -9, 4, 0, Math.PI);
+            ctx.fill();
+        }
+
+        // 6. Cabeça
+        ctx.fillStyle = c.skin;
+        ctx.strokeStyle = '#090d16';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(0, -19, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Orelhas
+        ctx.beginPath();
+        ctx.arc(-11, -19, 2.5, 0, Math.PI * 2);
+        ctx.arc(11, -19, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 7. Olhos e Sorriso
+        ctx.fillStyle = '#111827';
+        ctx.beginPath();
+        ctx.arc(-4, -19.5, 1.5, 0, Math.PI * 2);
+        ctx.arc(4, -19.5, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sorriso simpático
+        ctx.strokeStyle = '#451a03';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(0, -16.5, 3.2, 0.15 * Math.PI, 0.85 * Math.PI);
+        ctx.stroke();
+
+        // 8. Cabelos Específicos no Topo/Lados
+        if (c.hairStyle === 'long_parted') {
+            // Erika: Cabelo solto repartido ao meio SEM franja na testa
+            ctx.fillStyle = c.hairColor;
+            ctx.beginPath();
+            // Topo repartido mostrando a testa limpa
+            ctx.arc(0, -21, 11.8, Math.PI * 1.05, Math.PI * 1.95);
+            ctx.fill();
+            // Mechas laterais caindo pelos ombros sem cobrir os olhos/testa central
+            ctx.beginPath();
+            ctx.roundRect(-13, -24, 4.5, 22, 3);
+            ctx.roundRect(8.5, -24, 4.5, 22, 3);
+            ctx.fill();
+        } else if (c.hairStyle === 'bald') {
+            // Max: Careca com leve brilho no topo da cabeça
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+            ctx.beginPath();
+            ctx.ellipse(-3, -25, 3.5, 1.8, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (c.hairStyle === 'short_curly') {
+            // Samuel: Cabelinho cacheado bem curtinho
+            ctx.fillStyle = c.hairColor;
+            const curls = [
+                [-8, -26, 3.2], [-4, -28.5, 3.5], [0, -29.2, 3.6],
+                [4, -28.5, 3.5], [8, -26, 3.2], [-10, -23, 2.8], [10, -23, 2.8]
+            ];
+            curls.forEach(([cx, cy, cr]) => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        } else if (c.hairStyle === 'straight_grey') {
+            // Issao: Cabelo grisalho liso penteado
+            ctx.fillStyle = c.hairColor;
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(0, -21, 11.6, Math.PI * 0.92, Math.PI * 2.08);
+            ctx.fill();
+            ctx.stroke();
+            // Corte reto lateral liso
+            ctx.fillRect(-11, -26, 22, 4.5);
+        }
+
+        // 9. Óculos (para Max e Issao)
+        if (c.glasses) {
+            ctx.strokeStyle = '#1e293b';
+            ctx.fillStyle = 'rgba(186, 230, 253, 0.35)';
+            ctx.lineWidth = 1.5;
+            // Lente esquerda
+            ctx.beginPath();
+            ctx.roundRect(-8.2, -22.5, 6.8, 5.2, 1.5);
+            ctx.fill();
+            ctx.stroke();
+            // Lente direita
+            ctx.beginPath();
+            ctx.roundRect(1.4, -22.5, 6.8, 5.2, 1.5);
+            ctx.fill();
+            ctx.stroke();
+            // Ponte do óculos
+            ctx.beginPath();
+            ctx.moveTo(-1.4, -20);
+            ctx.lineTo(1.4, -20);
+            ctx.stroke();
+        }
+
+        // 10. Etiqueta Flutuante com o Nome (Estilo cadeflavio.run)
+        if (showTag) {
+            ctx.save();
+            ctx.rotate(-tilt); // Mantém a tag reta
+            const tagWidth = Math.max(48, c.tag.length * 8 + 14);
+            ctx.fillStyle = 'rgba(15, 18, 24, 0.92)';
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(-tagWidth / 2, -49, tagWidth, 14, 7);
+            ctx.fill();
+            ctx.stroke();
+
+            // Setinha amarela apontando para a cabeça
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.moveTo(-3.5, -34);
+            ctx.lineTo(3.5, -34);
+            ctx.lineTo(0, -30.5);
+            ctx.closePath();
+            ctx.fill();
+
+            // Texto do Nome
+            ctx.font = 'bold 9px "Courier Prime", monospace';
+            ctx.fillStyle = '#fbbf24';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(c.tag, 0, -42);
+            ctx.restore();
+        }
+
+        ctx.restore();
+    }
+
+    // Renderiza os 4 cartões de seleção de personagem
+    function renderCharacterPreviews() {
+        ['Erika', 'Max', 'Samuel', 'Issao'].forEach(key => {
+            const pCanvas = document.getElementById('preview-' + key);
+            if (!pCanvas) return;
+            const pCtx = pCanvas.getContext('2d');
+            pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+            drawFullCharacter(pCtx, pCanvas.width / 2, 68, key, {
+                scale: 1.55,
+                showTag: false,
+                isMoving: false
+            });
+        });
+    }
+
+    // =========================================================================
+    // CENA DO ESCRITÓRIO NO MENU INICIAL (4 PERSONAGENS TRABALHANDO NO PC)
+    // =========================================================================
+    const officeBubbles = [
+        { charIndex: 0, text: 'Quero cuzinho! ⚡' },
+        { charIndex: 1, text: 'Cadê o café?! ☕' },
+        { charIndex: 2, text: 'AAAII QUE DILIÇA;' },
+        { charIndex: 3, text: 'Vôlei na quinta? 👀' }
+    ];
+
+    function drawOfficeMenuScene() {
+        // Fundo do Escritório Noturno
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, W, H);
+
+        // Piso quadriculado de madeira/porcelanato do escritório
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 175, W, H - 175);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        ctx.lineWidth = 2;
+        for (let x = 0; x < W; x += 60) {
+            ctx.beginPath();
+            ctx.moveTo(x, 175);
+            ctx.lineTo(x, H);
+            ctx.stroke();
+        }
+        for (let y = 175; y < H; y += 45) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(W, y);
+            ctx.stroke();
+        }
+
+        // Grandes Janelas Panorâmicas ao fundo mostrando a cidade à noite
+        for (let i = 0; i < 3; i++) {
+            const wx = 95 + i * 280;
+            const wy = 35;
+            const ww = 210;
+            const wh = 115;
+
+            // Céu noturno lá fora
+            ctx.fillStyle = '#060b16';
+            ctx.fillRect(wx, wy, ww, wh);
+
+            // Prédios iluminados lá fora
+            ctx.fillStyle = '#111c33';
+            ctx.fillRect(wx + 15, wy + 35, 45, 80);
+            ctx.fillRect(wx + 70, wy + 20, 55, 95);
+            ctx.fillRect(wx + 135, wy + 45, 50, 70);
+
+            // Janelinhas acesas nos prédios
+            ctx.fillStyle = '#fde047';
+            for (let bx = wx + 22; bx < wx + 175; bx += 18) {
+                for (let by = wy + 42; by < wy + 105; by += 16) {
+                    if ((bx + by) % 3 === 0) ctx.fillRect(bx, by, 6, 8);
+                }
+            }
+
+            // Moldura da janela
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(wx, wy, ww, wh);
+        }
+
+        // Quatro Estações de Trabalho (Erika, Max, Samuel, Issao)
+        const keys = ['Erika', 'Max', 'Samuel', 'Issao'];
+        const deskPositions = [
+            { x: 165, y: 315 },
+            { x: 375, y: 315 },
+            { x: 585, y: 315 },
+            { x: 795, y: 315 }
+        ];
+
+        deskPositions.forEach((pos, idx) => {
+            const charKey = keys[idx];
+            const typingOffset = Math.sin(frameCount * 0.25 + idx * 1.7) * 2;
+
+            // Sombra da estação
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            ctx.beginPath();
+            ctx.ellipse(pos.x, pos.y + 42, 74, 22, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Encosto da cadeira ergonômica atrás do personagem
+            ctx.fillStyle = '#090d16';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(pos.x - 24, pos.y - 52, 48, 44, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            // Personagem sentado trabalhando
+            drawFullCharacter(ctx, pos.x, pos.y - 12 + typingOffset * 0.4, charKey, {
+                scale: 1.35,
+                showTag: true,
+                seated: true
+            });
+
+            // Mesa de Escritório (na frente do personagem)
+            ctx.fillStyle = '#78350f';
+            ctx.strokeStyle = '#451a03';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(pos.x - 68, pos.y - 2, 136, 36, 5);
+            ctx.fill();
+            ctx.stroke();
+
+            // Pés da mesa
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(pos.x - 60, pos.y + 34, 8, 22);
+            ctx.fillRect(pos.x + 52, pos.y + 34, 8, 22);
+
+            // Brilho da tela do computador no rosto do personagem
+            const screenGlow = ctx.createRadialGradient(pos.x, pos.y + 5, 5, pos.x, pos.y - 10, 55);
+            screenGlow.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+            screenGlow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+            ctx.fillStyle = screenGlow;
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y - 5, 55, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Monitor do Computador (visto de trás/cima na mesa)
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(pos.x - 26, pos.y - 12, 52, 26, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            // Suporte do Monitor
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(pos.x - 5, pos.y + 14, 10, 8);
+            ctx.fillRect(pos.x - 14, pos.y + 20, 28, 4);
+
+            // Caneca de Café fumegante na mesa
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.arc(pos.x + 44, pos.y + 12, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#451a03';
+            ctx.beginPath();
+            ctx.arc(pos.x + 44, pos.y + 12, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Balãozinho de fala animado alternando entre eles
+            const activeBubbleIdx = Math.floor(frameCount / 110) % 4;
+            if (activeBubbleIdx === idx) {
+                const bText = officeBubbles[idx].text;
+                ctx.font = 'bold 11px "Courier Prime", monospace';
+                const tw = ctx.measureText(bText).width + 18;
+                const bx = pos.x - tw / 2;
+                const by = pos.y - 110;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.roundRect(bx, by, tw, 24, 8);
+                ctx.fill();
+
+                ctx.fillStyle = '#0f172a';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(bText, pos.x, by + 12);
+            }
+        });
+    }
+
+    // =========================================================================
+    // CONTROLES DE TECLADO E MOBILE (MOVIMENTAÇÃO 2D LIVRE)
+    // =========================================================================
+    window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'KeyW'].includes(e.code)) { inputKeys.up = true; e.preventDefault(); }
+        if (['ArrowDown', 'KeyS'].includes(e.code)) { inputKeys.down = true; e.preventDefault(); }
+        if (['ArrowLeft', 'KeyA'].includes(e.code)) { inputKeys.left = true; e.preventDefault(); }
+        if (['ArrowRight', 'KeyD'].includes(e.code)) { inputKeys.right = true; e.preventDefault(); }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (['ArrowUp', 'KeyW'].includes(e.code)) inputKeys.up = false;
+        if (['ArrowDown', 'KeyS'].includes(e.code)) inputKeys.down = false;
+        if (['ArrowLeft', 'KeyA'].includes(e.code)) inputKeys.left = false;
+        if (['ArrowRight', 'KeyD'].includes(e.code)) inputKeys.right = false;
+    });
+
+    // D-Pad Touch para dispositivos móveis
+    const dpadButtons = document.querySelectorAll('.dpad-btn');
+    dpadButtons.forEach(btn => {
+        const dir = btn.dataset.dir;
+        const setDir = (val) => {
+            if (dir === 'up') inputKeys.up = val;
+            if (dir === 'down') inputKeys.down = val;
+            if (dir === 'left') inputKeys.left = val;
+            if (dir === 'right') inputKeys.right = val;
+        };
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); setDir(true); });
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); setDir(false); });
+        btn.addEventListener('mousedown', () => setDir(true));
+        btn.addEventListener('mouseup', () => setDir(false));
+    });
+
+    // Detectar toque na tela para mostrar o D-Pad no celular
+    window.addEventListener('touchstart', () => {
+        if (currentScreen === 'PLAYING') {
+            document.getElementById('mobile-dpad').style.display = 'grid';
+        }
+    }, { passive: true });
+
+    // =========================================================================
+    // INÍCIO DA PARTIDA E GERAÇÃO DE ENTIDADES
+    // =========================================================================
+    function startGameplay() {
+        showScreen('NONE');
+        currentScreen = 'PLAYING';
+
+        const diff = DIFFICULTIES[selectedDiffKey];
+        player.x = 160;
+        player.y = LANE_CENTERS[1];
+        player.vx = 0;
+        player.vy = 0;
+        player.lives = diff.lives;
+        player.maxLives = Math.max(5, diff.lives + 2);
+        player.invulnTimer = 0;
+        player.walkCycle = 0;
+        player.tilt = 0;
+
+        coinsCollected = 0;
+        nextEnergyMilestone = 50;
+        officeSpawned = false;
+        officeBuilding = null;
+        obstacles = [];
+        collectibles = [];
+        floatingTexts = [];
+        particles = [];
+
+        // Gerar moedas iniciais na pista
+        for (let i = 0; i < 6; i++) {
+            spawnCoin(320 + i * 115);
+        }
+    }
+
+    function triggerSpecialBanner(htmlText, cssClass, duration = 3200) {
+        const banner = document.getElementById('special-banner');
+        banner.className = cssClass;
+        banner.innerHTML = htmlText;
+        banner.classList.remove('hidden');
+
+        clearTimeout(banner._hideTimeout);
+        banner._hideTimeout = setTimeout(() => {
+            banner.classList.add('hidden');
+        }, duration);
+    }
+
+    function spawnCoin(customX) {
+        const laneY = LANE_CENTERS[Math.floor(Math.random() * LANE_COUNT)] + (Math.random() * 34 - 17);
+        collectibles.push({
+            type: 'coin',
+            x: customX || (W + 60),
+            y: Math.max(ROAD_TOP + 22, Math.min(ROAD_BOTTOM - 22, laneY)),
+            radius: 13,
+            vx: -DIFFICULTIES[selectedDiffKey].scrollSpeed * 0.85,
+            phase: Math.random() * Math.PI * 2
+        });
+    }
+
+    function spawnEnergyDrink() {
+        const laneY = LANE_CENTERS[1];
+        collectibles.push({
+            type: 'energy',
+            x: W + 40,
+            y: laneY,
+            radius: 18,
+            vx: -2.1, // Vem mais devagar para o jogador conseguir correr até ele!
+            phase: 0
+        });
+    }
+
+    function spawnTrafficObstacle() {
+        if (officeSpawned) return;
+
+        const diff = DIFFICULTIES[selectedDiffKey];
+        const laneIdx = Math.floor(Math.random() * LANE_COUNT);
+        const y = LANE_CENTERS[laneIdx];
+
+        // Evita spawnar veículo exatamente em cima de outro na mesma faixa
+        const tooClose = obstacles.some(o => Math.abs(o.y - y) < 40 && o.x > W - 180);
+        if (tooClose) return;
+
+        const roll = Math.random();
+        let type = 'car';
+        let w = 86;
+        let h = 40;
+        let speed = (4.8 + Math.random() * 1.8) * diff.trafficSpeedMult;
+        const carColors = ['#2563eb', '#dc2626', '#e2e8f0', '#475569', '#d97706', '#059669'];
+        let color = carColors[Math.floor(Math.random() * carColors.length)];
+
+        if (roll < 0.24) {
+            type = 'bus';
+            w = 148;
+            h = 48;
+            speed = 3.9 * diff.trafficSpeedMult;
+            color = '#0284c7';
+        } else if (roll < 0.52) {
+            type = 'moto';
+            w = 46;
+            h = 22;
+            speed = 7.4 * diff.trafficSpeedMult;
+            color = '#ef4444';
+        } else if (roll > 0.88) {
+            type = 'barrier';
+            w = 34;
+            h = 44;
+            speed = diff.scrollSpeed; // Fixo no asfalto
+            color = '#f97316';
+        }
+
+        obstacles.push({
+            type,
+            x: W + 110,
+            y,
+            w,
+            h,
+            vx: -speed,
+            color
+        });
+    }
+
+    function addFloatingText(x, y, text, color = '#fde047') {
+        floatingTexts.push({
+            x,
+            y,
+            text,
+            color,
+            alpha: 1,
+            vy: -1.4
+        });
+    }
+
+    function createSparkles(x, y, color, count = 10) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const spd = 1 + Math.random() * 3.5;
+            particles.push({
+                x,
+                y,
+                vx: Math.cos(angle) * spd,
+                vy: Math.sin(angle) * spd,
+                alpha: 1,
+                color,
+                size: 2 + Math.random() * 3
+            });
+        }
+    }
+
+    // =========================================================================
+    // ATUALIZAÇÃO DA FÍSICA E REGRAS DO JOGO
+    // =========================================================================
+    function updateGameplay() {
+        const diff = DIFFICULTIES[selectedDiffKey];
+        worldScroll += diff.scrollSpeed;
+
+        if (player.invulnTimer > 0) player.invulnTimer--;
+
+        // 1. Movimentação Livre em 4 Direções com LERP (Suavidade estilo 3D)
+        let dirX = 0;
+        let dirY = 0;
+        if (inputKeys.left) dirX -= 1;
+        if (inputKeys.right) dirX += 1;
+        if (inputKeys.up) dirY -= 1;
+        if (inputKeys.down) dirY += 1;
+
+        // Normalizar diagonal para não correr mais rápido na diagonal
+        if (dirX !== 0 && dirY !== 0) {
+            dirX *= 0.7071;
+            dirY *= 0.7071;
+        }
+
+        const targetVx = dirX * player.maxSpeedX;
+        const targetVy = dirY * player.maxSpeedY;
+
+        // Interpolação Linear (LERP) nas velocidades
+        player.vx += (targetVx - player.vx) * player.lerpFactor;
+        player.vy += (targetVy - player.vy) * player.lerpFactor;
+
+        player.x += player.vx;
+        player.y += player.vy;
+
+        // Limites da estrada e da tela
+        const minX = 48;
+        const maxX = W - 48;
+        const minY = ROAD_TOP + 16;
+        const maxY = ROAD_BOTTOM - 14;
+
+        if (player.x < minX) { player.x = minX; player.vx = 0; }
+        if (player.x > maxX) { player.x = maxX; player.vx = 0; }
+        if (player.y < minY) { player.y = minY; player.vy = 0; }
+        if (player.y > maxY) { player.y = maxY; player.vy = 0; }
+
+        // Animação de passos e inclinação
+        const speedMag = Math.hypot(player.vx, player.vy);
+        player.walkCycle += 0.18 + speedMag * 0.04;
+        const targetTilt = (player.vx * 0.025) + (player.vy * 0.015);
+        player.tilt += (targetTilt - player.tilt) * 0.2;
+
+        // 2. Spawns de Moedas e Obstáculos
+        if (!officeSpawned) {
+            if (frameCount % 36 === 0) {
+                spawnCoin();
+            }
+            if (frameCount % diff.spawnInterval === 0) {
+                spawnTrafficObstacle();
+            }
+        }
+
+        // 3. Atualizar Coletáveis (Moedas e Energético)
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            const item = collectibles[i];
+            item.x += item.vx;
+            item.phase += 0.1;
+
+            // Se for energético, não deixa sair rápido da tela para dar chance ao jogador
+            if (item.type === 'energy' && item.x < 120) {
+                item.x = 120;
+                item.vx = 0;
+            }
+
+            const dist = Math.hypot(player.x - item.x, player.y - item.y);
+            if (dist < player.radius + item.radius + 6) {
+                if (item.type === 'coin') {
+                    coinsCollected++;
+                    if (coinsCollected > highScore) {
+                        highScore = coinsCollected;
+                        localStorage.setItem('nightRun_office_highScore', highScore);
+                    }
+                    addFloatingText(item.x, item.y - 12, '+1 🪙', '#fde047');
+                    createSparkles(item.x, item.y, '#fbbf24', 7);
+
+                    // VERIFICA SE ATINGIU 50 MOEDAS -> DROPA ENERGÉTICO E EXIBE FRASE ANIMADA
+                    if (coinsCollected >= nextEnergyMilestone) {
+                        nextEnergyMilestone += 50;
+                        spawnEnergyDrink();
+                        triggerSpecialBanner('⚡ PEGUE O ENERGÉTICO! (+1 VIDA) ⚡', 'banner-energy', 3500);
+                    }
+
+                    // VERIFICA SE ATINGIU 100 MOEDAS -> RETA FINAL DO ESCRITÓRIO
+                    if (coinsCollected >= 100 && !officeSpawned) {
+                        officeSpawned = true;
+                        officeBuilding = {
+                            x: W + 140,
+                            targetX: W - 195,
+                            y: ROAD_TOP - 35,
+                            w: 195,
+                            h: ROAD_HEIGHT + 70
+                        };
+                        triggerSpecialBanner('🏁 100 MOEDAS! ENTRE NO ESCRITÓRIO À DIREITA! 🏁', 'banner-office', 4500);
+                    }
+                } else if (item.type === 'energy') {
+                    player.lives = Math.min(player.maxLives, player.lives + 1);
+                    addFloatingText(player.x, player.y - 25, '+1 VIDA! ❤️⚡', '#00f5d4');
+                    createSparkles(item.x, item.y, '#00f5d4', 18);
+                }
+
+                collectibles.splice(i, 1);
+                continue;
+            }
+
+            if (item.x < -80) {
+                collectibles.splice(i, 1);
+            }
+        }
+
+        // 4. Atualizar Obstáculos (Carros, Motos, Ônibus e Barreiras)
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            const obs = obstacles[i];
+            obs.x += obs.vx;
+
+            // Colisão com o jogador
+            if (player.invulnTimer <= 0) {
+                const px1 = player.x - 11;
+                const px2 = player.x + 11;
+                const py1 = player.y - 10;
+                const py2 = player.y + 16;
+
+                const ox1 = obs.x - obs.w / 2 + 6;
+                const ox2 = obs.x + obs.w / 2 - 6;
+                const oy1 = obs.y - obs.h / 2 + 5;
+                const oy2 = obs.y + obs.h / 2 - 5;
+
+                if (px2 > ox1 && px1 < ox2 && py2 > oy1 && py1 < oy2) {
+                    player.lives--;
+                    player.invulnTimer = 85;
+                    player.vx = -6; // Empurrãozinho de impacto
+                    addFloatingText(player.x, player.y - 25, '-1 ❤️', '#ef4444');
+                    createSparkles(player.x, player.y, '#ef4444', 14);
+
+                    if (player.lives <= 0) {
+                        document.getElementById('gameover-coins').innerText = `${coinsCollected} / 100`;
+                        document.getElementById('gameover-best').innerText = highScore;
+                        document.getElementById('mobile-dpad').style.display = 'none';
+                        showScreen('screen-gameover');
+                        return;
+                    }
+                }
+            }
+
+            if (obs.x < -200) {
+                obstacles.splice(i, 1);
+            }
+        }
+
+        // 5. Atualizar Chegada do Escritório (Reta Final após 100 moedas)
+        if (officeSpawned && officeBuilding) {
+            if (officeBuilding.x > officeBuilding.targetX) {
+                officeBuilding.x -= 2.5;
+            }
+            // Se o jogador cruzar a entrada do escritório
+            if (player.x >= officeBuilding.x + 18) {
+                const charInfo = CHARACTERS[selectedCharKey];
+                document.getElementById('victory-msg').innerText =
+                    `${charInfo.name} (${charInfo.phrase.replace(/"/g, '')}) coletou ${coinsCollected} moedas e chegou ao escritório a salvo!`;
+                document.getElementById('victory-coins').innerText = coinsCollected;
+                document.getElementById('victory-best').innerText = highScore;
+                document.getElementById('mobile-dpad').style.display = 'none';
+                showScreen('screen-victory');
+                return;
+            }
+        }
+
+        // 6. Atualizar Partículas e Textos Flutuantes
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            const ft = floatingTexts[i];
+            ft.y += ft.vy;
+            ft.alpha -= 0.022;
+            if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= 0.035;
+            if (p.alpha <= 0) particles.splice(i, 1);
+        }
+    }
+
+    // =========================================================================
+    // RENDERIZAÇÃO DO CENÁRIO ESTILO CADEFLAVIO.RUN (PONTE / AVENIDA NOTURNA)
+    // =========================================================================
+    function drawWorldBackground() {
+        // 1. Rio / Água Noturna no Topo e na Base
+        ctx.fillStyle = '#0c192c';
+        ctx.fillRect(0, 0, W, H);
+
+        // Ondas sutis na água
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 8; i++) {
+            const wyTop = 25 + i * 16;
+            const wyBot = ROAD_BOTTOM + 45 + i * 15;
+            const waveShift = (worldScroll * 0.25 + i * 90) % W;
+
+            ctx.beginPath();
+            ctx.moveTo(W - waveShift, wyTop);
+            ctx.lineTo(W - waveShift + 55, wyTop);
+            ctx.moveTo(W - waveShift, wyBot);
+            ctx.lineTo(W - waveShift + 55, wyBot);
+            ctx.stroke();
+        }
+
+        // Pilares de sustentação da ponte na água inferior (com anéis de água)
+        for (let i = 0; i < 3; i++) {
+            const pillarX = ((i * 380) - (worldScroll * 0.45) % 380 + 380) % (W + 180) - 60;
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(pillarX - 18, ROAD_BOTTOM + 22, 36, 62);
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+            ctx.beginPath();
+            ctx.ellipse(pillarX, ROAD_BOTTOM + 84, 34, 7, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.ellipse(pillarX, ROAD_BOTTOM + 84, 48, 10, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // 2. Margem Esquerda com Prédios, Árvores e Placa Verde (igual à referência!)
+        const shoreOffset = Math.min(340, worldScroll * 0.08);
+        const shoreX = -shoreOffset;
+
+        if (shoreX > -320) {
+            // Gramado da margem
+            ctx.fillStyle = '#14291d';
+            ctx.beginPath();
+            ctx.moveTo(shoreX, 0);
+            ctx.lineTo(shoreX + 290, 0);
+            ctx.quadraticCurveTo(shoreX + 330, H / 2, shoreX + 280, H);
+            ctx.lineTo(shoreX, H);
+            ctx.fill();
+
+            // Prédios da margem com janelinhas amarelas
+            const bldgs = [
+                { x: shoreX + 18, y: 12, w: 62, h: 95 },
+                { x: shoreX + 92, y: 24, w: 58, h: 85 },
+                { x: shoreX + 162, y: 8, w: 68, h: 100 },
+                { x: shoreX + 24, y: ROAD_BOTTOM + 38, w: 64, h: 90 },
+                { x: shoreX + 104, y: ROAD_BOTTOM + 45, w: 72, h: 85 }
+            ];
+            bldgs.forEach(b => {
+                ctx.fillStyle = '#1e2536';
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+                ctx.fillStyle = '#eab308';
+                for (let jx = b.x + 10; jx < b.x + b.w - 12; jx += 14) {
+                    for (let jy = b.y + 10; jy < b.y + b.h - 14; jy += 14) {
+                        if ((jx + jy) % 4 === 0) ctx.fillRect(jx, jy, 6, 7);
+                    }
+                }
+            });
+
+            // Copas de árvores verdes arredondadas
+            const trees = [
+                [shoreX + 75, 95, 18], [shoreX + 150, 88, 20], [shoreX + 245, 78, 22],
+                [shoreX + 95, ROAD_BOTTOM + 52, 19], [shoreX + 195, ROAD_BOTTOM + 65, 22]
+            ];
+            trees.forEach(([tx, ty, tr]) => {
+                ctx.fillStyle = '#1b4332';
+                ctx.beginPath();
+                ctx.arc(tx, ty, tr, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#2d6a4f';
+                ctx.beginPath();
+                ctx.arc(tx - 4, ty - 4, tr * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Placa Rodoviária Verde ("BRASIL / RUMO AO ESCRITÓRIO")
+            ctx.fillStyle = '#14532d';
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(shoreX + 135, 86, 155, 38, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = 'bold 11px "Courier Prime", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('AVENIDA CENTRAL', shoreX + 212, 101);
+            ctx.font = '9px "Courier Prime", monospace';
+            ctx.fillText('RUMO AO ESCRITÓRIO', shoreX + 212, 115);
+        }
+
+        // 3. Muretas e Calçadas de Concreto da Ponte
+        ctx.fillStyle = '#3b4252';
+        ctx.fillRect(0, ROAD_TOP - 32, W, 32);
+        ctx.fillStyle = '#4c566a';
+        ctx.fillRect(0, ROAD_TOP - 8, W, 8);
+
+        ctx.fillStyle = '#3b4252';
+        ctx.fillRect(0, ROAD_BOTTOM, W, 32);
+        ctx.fillStyle = '#2e3440';
+        ctx.fillRect(0, ROAD_BOTTOM + 24, W, 8);
+
+        // Divisórias das placas de concreto da mureta
+        ctx.strokeStyle = '#2e3440';
+        ctx.lineWidth = 2;
+        const wallOffset = -(worldScroll % 80);
+        for (let wx = wallOffset; wx < W; wx += 80) {
+            ctx.beginPath();
+            ctx.moveTo(wx, ROAD_TOP - 32);
+            ctx.lineTo(wx, ROAD_TOP);
+            ctx.moveTo(wx, ROAD_BOTTOM);
+            ctx.lineTo(wx, ROAD_BOTTOM + 32);
+            ctx.stroke();
+        }
+
+        // 4. Asfalto da Rodovia
+        const roadGrad = ctx.createLinearGradient(0, ROAD_TOP, 0, ROAD_BOTTOM);
+        roadGrad.addColorStop(0, '#272b33');
+        roadGrad.addColorStop(0.5, '#323741');
+        roadGrad.addColorStop(1, '#252930');
+        ctx.fillStyle = roadGrad;
+        ctx.fillRect(0, ROAD_TOP, W, ROAD_HEIGHT);
+
+        // Linhas contínuas brancas nas margens da pista
+        ctx.fillStyle = 'rgba(226, 232, 240, 0.45)';
+        ctx.fillRect(0, ROAD_TOP + 4, W, 2);
+        ctx.fillRect(0, ROAD_BOTTOM - 6, W, 2);
+
+        // Setas pintadas no asfalto (igual à imagem de referência)
+        const arrowOffset = -(worldScroll % 320);
+        ctx.fillStyle = 'rgba(203, 213, 225, 0.16)';
+        for (let ax = arrowOffset; ax < W; ax += 320) {
+            [ROAD_TOP + LANE_H * 0.65, ROAD_TOP + LANE_H * 2.35].forEach(ay => {
+                ctx.beginPath();
+                ctx.moveTo(ax, ay - 4);
+                ctx.lineTo(ax + 26, ay - 4);
+                ctx.lineTo(ax + 26, ay - 10);
+                ctx.lineTo(ax + 42, ay);
+                ctx.lineTo(ax + 26, ay + 10);
+                ctx.lineTo(ax + 26, ay + 4);
+                ctx.lineTo(ax, ay + 4);
+                ctx.closePath();
+                ctx.fill();
+            });
+        }
+
+        // Faixas tracejadas entre as pistas + Linha amarela central
+        ctx.lineWidth = 3;
+        ctx.setLineDash([28, 28]);
+        ctx.lineDashOffset = worldScroll;
+
+        // Divisórias das 3 faixas
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+        ctx.beginPath();
+        ctx.moveTo(0, ROAD_TOP + LANE_H);
+        ctx.lineTo(W, ROAD_TOP + LANE_H);
+        ctx.moveTo(0, ROAD_TOP + LANE_H * 2);
+        ctx.lineTo(W, ROAD_TOP + LANE_H * 2);
+        ctx.stroke();
+
+        // Linha central amarela vibrante
+        ctx.strokeStyle = '#ca8a04';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(0, ROAD_TOP + ROAD_HEIGHT / 2);
+        ctx.lineTo(W, ROAD_TOP + ROAD_HEIGHT / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 5. Postes de Iluminação projetando cones suaves de luz na pista
+        const lampSpacing = 280;
+        const lampOffset = -(worldScroll % lampSpacing);
+        for (let lx = lampOffset; lx < W + lampSpacing; lx += lampSpacing) {
+            // Poste superior
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(lx - 2, ROAD_TOP - 44, 4, 16);
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(lx, ROAD_TOP - 28, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Halo de luz no asfalto (Superior)
+            const glowTop = ctx.createRadialGradient(lx, ROAD_TOP + 15, 5, lx, ROAD_TOP + 35, 95);
+            glowTop.addColorStop(0, 'rgba(254, 240, 138, 0.16)');
+            glowTop.addColorStop(1, 'rgba(254, 240, 138, 0)');
+            ctx.fillStyle = glowTop;
+            ctx.beginPath();
+            ctx.arc(lx, ROAD_TOP + 35, 95, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Poste inferior
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(lx + 140 - 2, ROAD_BOTTOM + 26, 4, 16);
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(lx + 140, ROAD_BOTTOM + 26, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // =========================================================================
+    // DESENHO DOS OBSTÁCULOS COM SOMBRA E FARÓIS REALISTAS
+    // =========================================================================
+    function drawTrafficObstacle(obs) {
+        ctx.save();
+        ctx.translate(obs.x, obs.y);
+
+        if (obs.type === 'barrier') {
+            // Sombra da barreira
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.beginPath();
+            ctx.ellipse(0, obs.h / 2 + 2, obs.w / 2 + 3, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cavalete / Muro de obra listrado
+            ctx.fillStyle = '#ea580c';
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-obs.w / 2, -obs.h / 2, obs.w, obs.h, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            // Faixas refletivas brancas
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(-obs.w / 2 + 4, -obs.h / 2 + 6, obs.w - 8, 8);
+            ctx.fillRect(-obs.w / 2 + 4, 4, obs.w - 8, 8);
+
+            // Giroflex âmbar piscando no topo
+            const blink = Math.floor(frameCount / 8) % 2 === 0;
+            ctx.fillStyle = blink ? '#fde047' : '#9a3412';
+            ctx.beginPath();
+            ctx.arc(0, -obs.h / 2 - 4, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            return;
+        }
+
+        // 1. Feixe de Luz dos Faróis (Linear Gradient apontando para a esquerda)
+        const beamLength = obs.type === 'moto' ? 140 : 195;
+        const beamGrad = ctx.createLinearGradient(-obs.w / 2, 0, -obs.w / 2 - beamLength, 0);
+        beamGrad.addColorStop(0, 'rgba(254, 249, 195, 0.42)');
+        beamGrad.addColorStop(0.5, 'rgba(254, 249, 195, 0.14)');
+        beamGrad.addColorStop(1, 'rgba(254, 249, 195, 0)');
+
+        ctx.fillStyle = beamGrad;
+        ctx.beginPath();
+        ctx.moveTo(-obs.w / 2, -obs.h * 0.35);
+        ctx.lineTo(-obs.w / 2 - beamLength, -obs.h * 1.15);
+        ctx.lineTo(-obs.w / 2 - beamLength, obs.h * 1.15);
+        ctx.lineTo(-obs.w / 2, obs.h * 0.35);
+        ctx.closePath();
+        ctx.fill();
+
+        // 2. Sombra embaixo do veículo
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+        ctx.beginPath();
+        ctx.ellipse(0, obs.h / 2 + 3, obs.w * 0.48, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (obs.type === 'moto') {
+            // Pneus da moto
+            ctx.fillStyle = '#090d16';
+            ctx.fillRect(-obs.w / 2 - 2, -3, 12, 8);
+            ctx.fillRect(obs.w / 2 - 10, -3, 12, 8);
+
+            // Chassi da moto
+            ctx.fillStyle = obs.color;
+            ctx.beginPath();
+            ctx.roundRect(-obs.w / 2 + 4, -7, obs.w - 8, 14, 5);
+            ctx.fill();
+
+            // Farol dianteiro brilhante
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(-obs.w / 2 + 4, 0, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Motoqueiro com capacete
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.roundRect(-4, -9, 14, 16, 4);
+            ctx.fill();
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.arc(-2, -2, 6.5, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (obs.type === 'bus') {
+            // Rodas do ônibus
+            ctx.fillStyle = '#090d16';
+            ctx.fillRect(-obs.w / 2 + 18, obs.h / 2 - 3, 16, 6);
+            ctx.fillRect(obs.w / 2 - 34, obs.h / 2 - 3, 16, 6);
+
+            // Carroceria do Ônibus
+            ctx.fillStyle = obs.color;
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-obs.w / 2, -obs.h / 2, obs.w, obs.h, 7);
+            ctx.fill();
+            ctx.stroke();
+
+            // Faixa branca lateral
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(-obs.w / 2 + 4, 2, obs.w - 8, 8);
+
+            // Janelas iluminadas dos passageiros
+            ctx.fillStyle = '#fde047';
+            for (let wx = -obs.w / 2 + 22; wx < obs.w / 2 - 18; wx += 20) {
+                ctx.fillRect(wx, -obs.h / 2 + 7, 14, 11);
+            }
+
+            // Para-brisa frontal
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(-obs.w / 2 + 4, -obs.h / 2 + 6, 10, obs.h - 14);
+
+            // Faróis e lanternas
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(-obs.w / 2, -obs.h / 2 + 5, 4, 7);
+            ctx.fillRect(-obs.w / 2, obs.h / 2 - 12, 4, 7);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(obs.w / 2 - 3, -obs.h / 2 + 5, 3, 8);
+        } else {
+            // CARRO (Perspectiva 3/4 lateral igual à viatura de cadeflavio.run)
+            // Rodas
+            ctx.fillStyle = '#090d16';
+            ctx.beginPath();
+            ctx.arc(-obs.w * 0.28, obs.h / 2 - 1, 7, 0, Math.PI * 2);
+            ctx.arc(obs.w * 0.28, obs.h / 2 - 1, 7, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Base do Carro
+            ctx.fillStyle = obs.color;
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.roundRect(-obs.w / 2, -2, obs.w, obs.h / 2 + 2, 5);
+            ctx.fill();
+            ctx.stroke();
+
+            // Teto / Cabine do Carro
+            ctx.beginPath();
+            ctx.moveTo(-obs.w * 0.28, -2);
+            ctx.lineTo(-obs.w * 0.14, -obs.h / 2 + 2);
+            ctx.lineTo(obs.w * 0.26, -obs.h / 2 + 2);
+            ctx.lineTo(obs.w * 0.36, -2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Janelas da cabine
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.moveTo(-obs.w * 0.23, -3);
+            ctx.lineTo(-obs.w * 0.12, -obs.h / 2 + 6);
+            ctx.lineTo(obs.w * 0.22, -obs.h / 2 + 6);
+            ctx.lineTo(obs.w * 0.30, -3);
+            ctx.closePath();
+            ctx.fill();
+
+            // Farol Dianteiro e Lanterna Traseira
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(-obs.w / 2, 2, 4, 6);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(obs.w / 2 - 4, 2, 4, 6);
+        }
+
+        ctx.restore();
+    }
+
+    // =========================================================================
+    // DESENHO DAS MOEDAS, ENERGÉTICO E PRÉDIO DO ESCRITÓRIO (META 100 MOEDAS)
+    // =========================================================================
+    function drawCollectible(item) {
+        ctx.save();
+        ctx.translate(item.x, item.y);
+
+        if (item.type === 'coin') {
+            // Sombra
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            ctx.beginPath();
+            ctx.ellipse(0, 14, 9, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Efeito 3D de giro na moeda
+            const spinWidth = Math.max(0.25, Math.abs(Math.cos(item.phase)));
+            const floatY = Math.sin(item.phase * 1.5) * 3;
+
+            ctx.translate(0, floatY);
+            ctx.scale(spinWidth, 1);
+
+            ctx.fillStyle = '#facc15';
+            ctx.strokeStyle = '#ca8a04';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(-2, -6, 4, 12);
+        } else if (item.type === 'energy') {
+            // Aura Neon Pulsante do Energético
+            const pulse = 24 + Math.sin(frameCount * 0.2) * 6;
+            const aura = ctx.createRadialGradient(0, 0, 4, 0, 0, pulse);
+            aura.addColorStop(0, 'rgba(0, 245, 212, 0.75)');
+            aura.addColorStop(1, 'rgba(0, 245, 212, 0)');
+            ctx.fillStyle = aura;
+            ctx.beginPath();
+            ctx.arc(0, 0, pulse, 0, Math.PI * 2);
+            ctx.fill();
+
+            const bounceY = Math.sin(frameCount * 0.15) * 5;
+            ctx.translate(0, bounceY);
+
+            // Lata de Energético Azul/Ciano
+            ctx.fillStyle = '#0284c7';
+            ctx.strokeStyle = '#e0f2fe';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-10, -15, 20, 30, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            // Tampa prateada
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(-8, -17, 16, 4);
+
+            // Símbolo de Raio Amarelo
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.moveTo(3, -9);
+            ctx.lineTo(-5, 1);
+            ctx.lineTo(1, 1);
+            ctx.lineTo(-3, 10);
+            ctx.lineTo(6, -1);
+            ctx.lineTo(0, -1);
+            ctx.closePath();
+            ctx.fill();
+
+            // Tag indicadora acima da lata
+            ctx.font = 'bold 10px "Courier Prime", monospace';
+            ctx.fillStyle = '#00f5d4';
+            ctx.textAlign = 'center';
+            ctx.fillText('⚡ +1 VIDA', 0, -24);
+        }
+
+        ctx.restore();
+    }
+
+    function drawOfficeFinishLine() {
+        if (!officeSpawned || !officeBuilding) return;
+        const b = officeBuilding;
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+
+        // Faixa quadriculada de chegada no asfalto antes do prédio
+        for (let row = 0; row < 10; row++) {
+            for (let col = 0; col < 2; col++) {
+                ctx.fillStyle = (row + col) % 2 === 0 ? '#f8fafc' : '#0f172a';
+                ctx.fillRect(-28 + col * 14, 35 + row * 25, 14, 25);
+            }
+        }
+
+        // Tapete vermelho na entrada
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(0, b.h / 2 - 38, 45, 76);
+
+        // Estrutura do Prédio do Escritório
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(22, 0, b.w - 22, b.h, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        // Janelas iluminadas do prédio
+        ctx.fillStyle = '#fde047';
+        for (let wy = 24; wy < b.h - 30; wy += 36) {
+            for (let wx = 50; wx < b.w - 25; wx += 34) {
+                if (wy > b.h / 2 - 45 && wy < b.h / 2 + 45 && wx < 95) continue;
+                ctx.fillRect(wx, wy, 20, 22);
+            }
+        }
+
+        // Portas de Vidro Iluminadas (Entrada)
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(22, b.h / 2 - 34, 24, 68);
+
+        // Letreiro Luminoso "ESCRITÓRIO"
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(36, b.h / 2 - 64, 138, 24, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 14px "Courier Prime", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏢 ESCRITÓRIO', 105, b.h / 2 - 48);
+
+        ctx.restore();
+    }
+
+    // =========================================================================
+    // HUD SUPERIOR ESTILO CADEFLAVIO.RUN (CORAÇÕES + BARRA DE PROGRESSO 100 MOEDAS)
+    // =========================================================================
+    function drawTopHUD() {
+        // 1. Corações de Vida no Canto Superior Esquerdo
+        for (let i = 0; i < player.maxLives; i++) {
+            const hx = 28 + i * 32;
+            const hy = 30;
+            const active = i < player.lives;
+
+            ctx.font = '22px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            if (active) {
+                ctx.shadowColor = 'rgba(239, 68, 68, 0.7)';
+                ctx.shadowBlur = 8;
+                ctx.fillText('❤️', hx, hy);
+                ctx.shadowBlur = 0;
+            } else {
+                ctx.globalAlpha = 0.25;
+                ctx.fillText('🖤', hx, hy);
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // 2. Barra de Progresso Centralizada (Estilo "PONTE DA AMIZADE" de cadeflavio.run)
+        const barW = 360;
+        const barX = W / 2 - barW / 2;
+        const barY = 38;
+        const progress = Math.min(1, coinsCollected / 100);
+
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '11px "Courier Prime", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('C A M I N H O   D O   E S C R I T Ó R I O', W / 2, barY - 14);
+
+        // Trilho da barra
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.3)';
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW, 5, 3);
+        ctx.fill();
+
+        // Preenchimento dourado
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW * progress, 5, 3);
+        ctx.fill();
+
+        // Marcador do meio (50 moedas = Energético)
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(W / 2 - 1, barY - 4, 2, 13);
+
+        // Textos dos marcos abaixo da barra
+        ctx.font = '10px "Courier Prime", monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'left';
+        ctx.fillText('INÍCIO', barX, barY + 18);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = coinsCollected >= 50 ? '#00f5d4' : '#94a3b8';
+        ctx.fillText('50🪙 ⚡', W / 2, barY + 18);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = coinsCollected >= 100 ? '#fde047' : '#94a3b8';
+        ctx.fillText('100🪙 🏢', barX + barW, barY + 18);
+
+        // Bolinha amarela brilhante indicando a posição atual
+        const dotX = barX + barW * progress;
+        ctx.fillStyle = '#fbbf24';
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(dotX, barY + 2.5, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // 3. Contador de Moedas e Recorde no Canto Superior Direito
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(W - 215, 14, 195, 44, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 14px "Courier Prime", monospace';
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText(`🪙 MOEDAS: ${coinsCollected}/100`, W - 202, 32);
+
+        ctx.font = '11px "Courier Prime", monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`🏆 RECORDE: ${highScore}`, W - 202, 48);
+    }
+
+    // =========================================================================
+    // LOOP PRINCIPAL DE RENDERIZAÇÃO (60 FPS)
+    // =========================================================================
+    function renderGameplay() {
+        drawWorldBackground();
+        drawOfficeFinishLine();
+
+        // Ordenar entidades por Y (Depth Sorting) para que o personagem passe por trás/frente com perfeição 3D
+        const renderQueue = [];
+
+        collectibles.forEach(c => {
+            renderQueue.push({ y: c.y, draw: () => drawCollectible(c) });
+        });
+
+        obstacles.forEach(o => {
+            renderQueue.push({ y: o.y, draw: () => drawTrafficObstacle(o) });
+        });
+
+        renderQueue.push({
+            y: player.y,
+            draw: () => {
+                // Piscar quando invulnerável após dano
+                if (player.invulnTimer > 0 && Math.floor(frameCount / 4) % 2 === 0) {
+                    ctx.globalAlpha = 0.4;
+                }
+                const isMoving = Math.hypot(player.vx, player.vy) > 0.35;
+                drawFullCharacter(ctx, player.x, player.y, selectedCharKey, {
+                    scale: 1.15,
+                    walkCycle: player.walkCycle,
+                    isMoving,
+                    showTag: true,
+                    tilt: player.tilt
+                });
+                ctx.globalAlpha = 1;
+            }
+        });
+
+        // Ordena do menor Y (mais ao fundo) para o maior Y (mais à frente)
+        renderQueue.sort((a, b) => a.y - b.y);
+        renderQueue.forEach(item => item.draw());
+
+        // Partículas
+        particles.forEach(p => {
+            ctx.globalAlpha = Math.max(0, p.alpha);
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        // Textos flutuantes (+1 Moeda, +1 Vida, etc.)
+        floatingTexts.forEach(ft => {
+            ctx.globalAlpha = Math.max(0, ft.alpha);
+            ctx.font = 'bold 14px "Press Start 2P", monospace';
+            ctx.fillStyle = ft.color;
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.textAlign = 'center';
+            ctx.strokeText(ft.text, ft.x, ft.y);
+            ctx.fillText(ft.text, ft.x, ft.y);
+        });
+        ctx.globalAlpha = 1;
+
+        drawTopHUD();
+    }
+
+    function mainLoop() {
+        frameCount++;
+
+        if (currentScreen === 'screen-main-menu') {
+            drawOfficeMenuScene();
+        } else if (currentScreen === 'PLAYING') {
+            updateGameplay();
+            if (currentScreen === 'PLAYING') {
+                renderGameplay();
+            }
+        } else {
+            // Fundo estático da rodovia enquanto navega nos menus secundários
+            drawWorldBackground();
+        }
+
+        requestAnimationFrame(mainLoop);
+    }
+
+    // Inicializar miniaturas e disparar o loop no carregamento
+    window.onload = () => {
+        renderCharacterPreviews();
+        mainLoop();
+    };
+</script>
+</body>
+</html>
